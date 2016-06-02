@@ -1,0 +1,5 @@
+response||post||required||enumerator||json|xml|serial
+method||post||required||enumerator||uri|email
+query||post||required||string
+peers||post||notrequired||boolean
+number||post||required||number

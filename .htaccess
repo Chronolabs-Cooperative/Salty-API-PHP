@@ -1,0 +1,8 @@
+
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteRule ^v2/(search|mirror|retrieve|lodge).api 			index.php?action=$1		[L,NC,QSA]
+
+

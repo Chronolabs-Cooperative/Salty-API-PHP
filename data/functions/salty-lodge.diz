@@ -1,0 +1,7 @@
+response||post||required||enumerator||json|xml|serial
+method||post||required||enumerator||uri|email
+email||post||required||email
+name||post||required||words||2
+pin||post||required||number||4-12
+uri||post||required||url
+salt||post||required
