@@ -33,59 +33,96 @@
 	ini_set('memory_limit', '64M');
 	
 	require_once __DIR__ . DIRECTORY_SEPARATOR . 'apiconfig.php';
-	require_once __DIR__ . DIRECTORY_SEPARATOR . 'functions.php';
-	require_once __DIR__ . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'saltydb.php';
-	
-	/**
-	 * Global API Configurations and Setting from file Constants!
-	 */
-	$domain = getDomainSupportism('domain', $_SERVER["HTTP_HOST"]);
-	$protocol = getDomainSupportism('protocol', $_SERVER["HTTP_HOST"]);
-	$business = getDomainSupportism('business', $_SERVER["HTTP_HOST"]);
-	$entity = getDomainSupportism('entity', $_SERVER["HTTP_HOST"]);
-	$contact = getDomainSupportism('contact', $_SERVER["HTTP_HOST"]);
-	$referee = getDomainSupportism('referee', $_SERVER["HTTP_HOST"]);
-	$peerings = getPeersSupporting();
 	
 	/**
 	 * URI Path Finding of API URL Source Locality
+	 * @var unknown_type
 	 */
-	$source = (isset($_SERVER['HTTPS'])?'https://':'http://').strtolower($_SERVER['HTTP_HOST']).API_URL_BASE_PATH;
-	
-	/**
-	 * Display Help if Function Variables Are Wrong
-	 */
-	if (checkDisplayHelp(isset($_REQUEST['action'])?$_REQUEST['action']:'')) {
-		if (function_exists("http_response_code"))
-			http_response_code(400);
-		apiLoadLanguage('help');
-		exit;
+	$odds = $inner = array();
+	foreach($_GET as $key => $values) {
+	    if (!isset($inner[$key])) {
+	        $inner[$key] = $values;
+	    } elseif (!in_array(!is_array($values) ? $values : md5(json_encode($values, true)), array_keys($odds[$key]))) {
+	        if (is_array($values)) {
+	            $odds[$key][md5(json_encode($inner[$key] = $values, true))] = $values;
+	        } else {
+	            $odds[$key][$inner[$key] = $values] = "$values--$key";
+	        }
+	    }
 	}
-	if (function_exists("http_response_code"))
-		http_response_code(200);
-		
-	foreach($_GET as $key => $value)
-		${$key} = $value;
 	
-	foreach($_POST as $key => $value)
-		${$key} = $value;
-		
-	switch ($action) {
-		case 'search':
-			$data = apiSearch($method, $query, (isset($peers)?true:false), $number, $peerings);
-			break;
-		case 'lodge':
-			$data = apiLodge($email, $name, $pin, $uri, $salt, $peerings);
-			break;
-		case 'retrieve':
-			$data = apiRetrieve($email, $pin, $uri, $peerings);
-			break;
+	foreach($_POST as $key => $values) {
+	    if (!isset($inner[$key])) {
+	        $inner[$key] = $values;
+	    } elseif (!in_array(!is_array($values) ? $values : md5(json_encode($values, true)), array_keys($odds[$key]))) {
+	        if (is_array($values)) {
+	            $odds[$key][md5(json_encode($inner[$key] = $values, true))] = $values;
+	        } else {
+	            $odds[$key][$inner[$key] = $values] = "$values--$key";
+	        }
+	    }
+	}
+	
+	foreach(parse_url('http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'].(strpos($_SERVER['REQUEST_URI'], '?')?'&':'?').$_SERVER['QUERY_STRING'], PHP_URL_QUERY) as $key => $values) {
+	    if (!isset($inner[$key])) {
+	        $inner[$key] = $values;
+	    } elseif (!in_array(!is_array($values) ? $values : md5(json_encode($values, true)), array_keys($odds[$key]))) {
+	        if (is_array($values)) {
+	            $odds[$key][md5(json_encode($inner[$key] = $values, true))] = $values;
+	        } else {
+	            $odds[$key][$inner[$key] = $values] = "$values--$key";
+	        }
+	    }
+	}
+	
+	foreach($inner as $key => $value)
+	    ${$key} = $value;
+
+    /**
+     * Display Help if Function Variables Are Wrong
+     */
+	if (checkDisplayHelp(isset($action)?$action:'')) {
+        if (function_exists("http_response_code"))
+            http_response_code(400);
+        apiLoadLanguage('help');
+        exit;
+    }
+    if (function_exists("http_response_code"))
+        http_response_code(200);
+        
+	if (!isset($version) || $version == '2')
+    	switch ($action) {
+    		case 'search':
+    		    $data = apiSearch($method, $query, (isset($peers)?true:false), $number, $peerings);
+    			break;
+    		case 'lodge':
+    			$data = apiLodge($email, $name, $pin, $uri, $salt, $peerings);
+    			break;
+    		case 'retrieve':
+    		    $data = apiRetrieve($email, $pin, $uri, $peerings);
+    			break;
+    	}
+    elseif ($version == '3')
+	    switch ($action) {
+	        case 'search':
+	            $data = apiSearchV3($method, $query, $variable, (isset($peers)?true:false), $number, $peerings);
+	            break;
+	        case 'lodge':
+	            $data = apiLodgeV3($email, $variable, $name, $pin, $uri, $salt, $peerings);
+	            break;
+	        case 'retrieve':
+	            $data = apiRetrieveV3($email, $variable, $pin, $uri, $peerings);
+	            break;
 	}
 	
 	// Send Responses
 	switch ($response) 
 	{
 		default:
+		case 'raw':
+		    header('Content-type: application/x-httpd-php');
+		    die("<"."?"."php\n\n\treturn " . var_export($data, true) . ";\n\n?".">");
+		    break;
 		case 'json':
 			header('Content-type: application/json');
 			die(json_encode($data));
