@@ -29,5 +29,5 @@ defined('API_ROOT_PATH') || exit('Restricted access');
 /**
  *  Define API version
  */
-define('API_VERSION', 'Blowfish Salt API 2.3.69');
+define('API_VERSION', 'Blowfish Salt API 3.0.99');
 define('API_TYPE', 'salty');
